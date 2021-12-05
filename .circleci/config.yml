@@ -34,12 +34,20 @@ jobs:
     - checkout
     - restore_cache:
         key: kafka-go-mod-{{ checksum "go.sum" }}-1
-    - run: go mod download
+    - run:
+        name: Download dependencies
+        command: go mod download
     - save_cache:
         key: kafka-go-mod-{{ checksum "go.sum" }}-1
         paths:
         - /go/pkg/mod
-    - run: go test -race -cover ./...
+    - run:
+        name: Test kafka-go
+        command: go test -race -cover ./...
+    - run:
+        name: Test kafka-go/sasl/aws_msk_iam
+        working_directory: ./sasl/aws_msk_iam
+        command: go test -race -cover ./...
 
   # Starting at version 0.11, the kafka features and configuration remained
   # mostly stable, so we can use this CI job configuration as template for other
@@ -176,17 +184,6 @@ jobs:
     working_directory: *working_directory
     environment:
       KAFKA_VERSION: "2.4.1"
-
-      # Need to skip nettest to avoid these kinds of errors:
-      #  --- FAIL: TestConn/nettest (17.56s)
-      #    --- FAIL: TestConn/nettest/PingPong (7.40s)
-      #      conntest.go:112: unexpected Read error: [7] Request Timed Out: the request exceeded the user-specified time limit in the request
-      #      conntest.go:118: mismatching value: got 77, want 78
-      #      conntest.go:118: mismatching value: got 78, want 79
-      # ...
-      #
-      # TODO: Figure out why these are happening and fix them (they don't appear to be new).
-      KAFKA_SKIP_NETTEST: "1"
     docker:
     - image: circleci/golang
     - image: wurstmeister/zookeeper
@@ -203,17 +200,6 @@ jobs:
     working_directory: *working_directory
     environment:
       KAFKA_VERSION: "2.6.0"
-
-      # Need to skip nettest to avoid these kinds of errors:
-      #  --- FAIL: TestConn/nettest (17.56s)
-      #    --- FAIL: TestConn/nettest/PingPong (7.40s)
-      #      conntest.go:112: unexpected Read error: [7] Request Timed Out: the request exceeded the user-specified time limit in the request
-      #      conntest.go:118: mismatching value: got 77, want 78
-      #      conntest.go:118: mismatching value: got 78, want 79
-      # ...
-      #
-      # TODO: Figure out why these are happening and fix them (they don't appear to be new).
-      KAFKA_SKIP_NETTEST: "1"
     docker:
     - image: circleci/golang
     - image: wurstmeister/zookeeper
@@ -230,17 +216,6 @@ jobs:
     working_directory: *working_directory
     environment:
       KAFKA_VERSION: "2.7.1"
-
-      # Need to skip nettest to avoid these kinds of errors:
-      #  --- FAIL: TestConn/nettest (17.56s)
-      #    --- FAIL: TestConn/nettest/PingPong (7.40s)
-      #      conntest.go:112: unexpected Read error: [7] Request Timed Out: the request exceeded the user-specified time limit in the request
-      #      conntest.go:118: mismatching value: got 77, want 78
-      #      conntest.go:118: mismatching value: got 78, want 79
-      # ...
-      #
-      # TODO: Figure out why these are happening and fix them (they don't appear to be new).
-      KAFKA_SKIP_NETTEST: "1"
     docker:
     - image: circleci/golang
     - image: wurstmeister/zookeeper
@@ -252,7 +227,7 @@ jobs:
       - 9093:9093
       environment: *environment
     steps: *steps
-       
+
 workflows:
   version: 2
   run:
